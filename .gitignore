@@ -1,0 +1,11 @@
+node_modules/
+__pycache__/
+dist/
+.env
+*.pkl
+*.db
+railway_local.db
+*.pyc
+venv/
+.venv/
+.DS_Store
