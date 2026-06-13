@@ -9,3 +9,4 @@ railway_local.db
 venv/
 .venv/
 .DS_Store
+Dataset/price_data.csv 
