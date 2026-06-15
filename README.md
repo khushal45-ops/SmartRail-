@@ -1,148 +1,180 @@
-# SmartRail - AI Powered Railway Management
+# SmartRail — AI-Powered Railway Management System
 
-AI-powered railway operations application. Includes delay prediction (XGBoost), smart ticket reallocation, real-time WebSockets, analytics, and a keyword-based chatbot.
+Minor Project - II | Acropolis Institute of Technology and Research, Indore
+Department of Information Technology & CSE (Data Science) | B.Tech Third Year | Jan – June 2026
+
+---
+
+## Team
+
+| Name | Role |
+|------|------|
+| Khushal | ML Model, Backend API |
+| Darshan | Frontend Components |
+| Divyansh | Database, Authentication |
+| Aaryan | Testing, Documentation |
+
+Guide: Prof. Mayank Bhat
+
+---
+
+## About the Project
+
+SmartRail is an AI-powered Railway Management System that predicts train delays, reallocates tickets intelligently, provides real-time train tracking, and assists passengers through an AI chatbot.
+
+Traditional railway systems only show current train status — they do not predict future delays or suggest alternatives. SmartRail solves this with Machine Learning.
 
 ---
 
 ## Features
 
-- **Delay Prediction**: AI-powered delay prediction using XGBoost.
-- **Smart Ticket Reallocation**: Intelligent reallocation of tickets.
-- **Real-time Updates**: Live WebSockets for train status and dashboard stats.
-- **Analytics Dashboard**: Summary of operations, delay trends, and platform statistics.
-- **AI Chatbot**: Keyword-based intent routing chatbot for user queries.
+| Feature | Description |
+|---------|-------------|
+| Delay Prediction | Random Forest model (93.21% R2) predicts delay in minutes |
+| Smart Ticket Reallocation | Auto-suggests alternative trains when delay exceeds 60 min |
+| Real-time Tracking | WebSocket live train status updates every 10 seconds |
+| Analytics Dashboard | Zone performance, delay trends, platform utilization |
+| AI Chatbot | Intent-based chatbot for PNR, delay, cancellation queries |
+| Role-Based Access | Separate Passenger and Admin portals |
+| Alert System | Celery + Redis async SMS/Email delay notifications |
 
 ---
 
-## Tech Stack Used
+## ML Model Details
 
-**Frontend**:
-- React (built with Vite)
-- Node.js (18+)
+| Property | Value |
+|----------|-------|
+| Algorithm | Random Forest Regressor |
+| R2 Score | 0.9321 (93.21%) |
+| RMSE | 14.58 minutes |
+| Training Data | etrain_delays.csv + 4 supporting datasets |
+| Features Used | 9 (station_code, pct_right_time, distance, running_days, etc.) |
+| Saved Model | models/delay_model.pkl |
+| Encoders | models/encoders.pkl |
 
-**Backend**:
+---
+
+## Tech Stack
+
+Frontend:
+- React.js + TypeScript (Vite)
+- Tailwind CSS + shadcn/ui
+- Axios, WebSocket
+
+Backend:
 - FastAPI (Python 3.11+)
-- PostgreSQL (14+) for primary database
-- SQLAlchemy as ORM
-- Redis (6+) for caching and message brokering
-- Celery for background tasks
-- XGBoost for machine learning models
+- SQLAlchemy ORM
+- PostgreSQL 14+
+- Redis 6+
+- Celery (background tasks)
+
+Machine Learning:
+- Scikit-learn (Random Forest, Gradient Boosting)
+- XGBoost
+- Pandas, NumPy
+- Joblib (model serialization)
+
+---
+
+## Project Structure
+
+SmartRail/
+├── app/
+│   ├── api/          - FastAPI route handlers
+│   ├── ml/           - Machine Learning pipeline
+│   ├── models/       - SQLAlchemy DB models
+│   ├── schemas/      - Pydantic schemas
+│   ├── services/     - Business logic
+│   └── core/         - Config, JWT, DB
+├── src/              - React frontend
+├── Dataset/          - Training datasets
+├── models/           - Saved ML models
+├── scripts/          - Utility scripts
+├── main.py
+├── celery_worker.py
+├── requirements.txt
+└── package.json
 
 ---
 
 ## Dataset Info
 
-The `Dataset/` directory contains various CSV and JSON files used for model training and analysis:
-- `Train_details_22122017.csv` (16.7 MB) - Comprehensive train details.
-- `etrain_delays.csv` (300 KB) - Historical delay data.
-- `price_data.csv` (124.8 MB) - Ticket pricing data.
-- `traininfo.json` (16.8 MB) - Information about trains in JSON format.
-- `trains_cleartrip.csv` (193 KB) - Cleartrip train data.
+| File | Size | Used For |
+|------|------|----------|
+| etrain_delays.csv | 300 KB | Primary ML training data |
+| Train_details_22122017.csv | 16.7 MB | Station sequence, distance |
+| traininfo.json | 16.8 MB | Train schedule, running days |
+| trains_cleartrip.csv | 193 KB | Route info |
+| price_data.csv | 124.8 MB | Ticket pricing (excluded from repo) |
+
+Note: price_data.csv is excluded due to GitHub 100MB limit. Place it manually in Dataset/ folder.
 
 ---
 
-## How to Run Backend
+## How to Run
 
-### 1. Clone and create a virtual environment
+### Backend
 
-```bash
-cd SmartRail
+```
+git clone https://github.com/khushal45-ops/SmartRail-.git
+cd SmartRail-
 python -m venv .venv
-
-# Windows
 .venv\Scripts\activate
-
-# macOS / Linux
-source .venv/bin/activate
-```
-
-### 2. Install Python dependencies
-
-```bash
 pip install -r requirements.txt
+cp .env.example .env
+python app/ml/train_model.py
+python -m uvicorn main:app --reload --port 8000
 ```
 
-### 3. Configure environment variables
+Backend runs at: http://localhost:8000
+Swagger Docs: http://localhost:8000/docs
 
-Copy and edit `.env` in the project root:
+### Frontend
 
-```env
-# Application
-APP_NAME=Railway Management System API
-DEBUG=true
-
-# PostgreSQL
-DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/railway_db
-
-# Redis
-REDIS_URL=redis://localhost:6379/0
-CELERY_BROKER_URL=redis://localhost:6379/1
-CELERY_RESULT_BACKEND=redis://localhost:6379/2
-
-# JWT
-SECRET_KEY=change-me-in-production-use-a-long-random-string
-
-# CORS — React dev server (Vite default: 5173)
-CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
 ```
-
-### 4. Setup Services
-
-Create the PostgreSQL database (`railway_db`) and start Redis (e.g. `docker run -d --name redis -p 6379:6379 redis:7`).
-
-### 5. Train the delay prediction model
-
-```bash
-python scripts/train_delay_model.py
-```
-
-### 6. Run the API and Celery worker
-
-**Terminal 1 (FastAPI):**
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-- API: http://localhost:8000  
-- Swagger docs: http://localhost:8000/docs  
-
-**Terminal 2 (Celery):**
-```bash
-celery -A celery_worker.celery_app worker --loglevel=info
-```
-
----
-
-## How to Run Frontend
-
-Open a new terminal and navigate to the project directory:
-
-```bash
-# Install Node dependencies
 npm install
-
-# Start the Vite development server
 npm run dev
 ```
 
-Frontend will be available at: http://localhost:5173
+Frontend runs at: http://localhost:5174
 
 ---
 
-## API Overview
+## Demo Credentials
 
-| Prefix            | Description                                      |
-|-------------------|--------------------------------------------------|
-| `/api/auth`       | Register, login, current user                    |
-| `/api/trains`     | Trains, delay prediction, status updates         |
-| `/api/tickets`    | Smart ticket reallocation                        |
-| `/api/chat`       | AI chatbot (keyword intent routing)              |
-| `/api/analytics`  | Summary, delay trends, zone & platform stats     |
-| `/api/v1`         | Health check, legacy ML endpoint                 |
-| `/ws/train/{id}`  | Live train status (WebSocket, 10s interval)      |
-| `/ws/dashboard`   | Fleet stats (WebSocket, 10s interval)            |
+| Role | Email | Password |
+|------|-------|----------|
+| Passenger | passenger@smartrail.com | pass123 |
+| Admin | admin@smartrail.com | admin123 |
+
+---
+
+## API Endpoints
+
+| Prefix | Description |
+|--------|-------------|
+| /api/auth | Register, Login |
+| /api/trains | Train list, Delay Prediction |
+| /api/tickets | Ticket Reallocation |
+| /api/chat | AI Chatbot |
+| /api/analytics | Dashboard stats |
+| /ws/train/{id} | Live train status WebSocket |
+| /ws/dashboard | Fleet stats WebSocket |
+
+---
+
+## Future Scope
+
+- Integration with official IRCTC API
+- GPS-based real-time train location
+- Mobile application (React Native)
+- Voice assistant support
+- Nationwide deployment
 
 ---
 
 ## License
 
-Private / internal use.
+Academic use only — Minor Project II, Acropolis Institute of Technology and Research, Indore.
+
+Made with love by Team SmartRail | Acropolis Institute, Indore | 2026
