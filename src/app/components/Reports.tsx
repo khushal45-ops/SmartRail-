@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Download, Filter, Calendar, BarChart2, Plus, RefreshCw, Loader2 } from 'lucide-react';
+import { FileText, Download, Filter, Calendar, BarChart2, Plus, RefreshCw, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateReport } from '../../api';
 
@@ -12,7 +12,17 @@ export function Reports() {
   ]);
   const [generating, setGenerating] = useState(false);
   const [filterActive, setFilterActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('All');
   const [downloading, setDownloading] = useState<string | null>(null);
+
+  const filteredReports = reports.filter(r => {
+    if (filterActive) {
+      if (searchQuery && !r.name.toLowerCase().includes(searchQuery.toLowerCase()) && !r.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (typeFilter !== 'All' && r.type !== typeFilter) return false;
+    }
+    return true;
+  });
 
   const handleGenerate = async () => {
     try {
@@ -68,6 +78,32 @@ export function Reports() {
         </div>
       </div>
       
+      {filterActive && (
+        <div className="glass-panel p-4 rounded-xl border border-white/5 flex flex-wrap gap-4 animate-in fade-in slide-in-from-top-2 bg-black/20">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search by ID or name..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+            />
+          </div>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none min-w-[150px] cursor-pointer"
+          >
+            <option value="All" className="bg-slate-900">All Types</option>
+            <option value="Financial" className="bg-slate-900">Financial</option>
+            <option value="Operations" className="bg-slate-900">Operations</option>
+            <option value="Maintenance" className="bg-slate-900">Maintenance</option>
+            <option value="Performance" className="bg-slate-900">Performance</option>
+          </select>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-5 rounded-2xl border border-white/5 relative overflow-hidden group">
            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -112,7 +148,7 @@ export function Reports() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {reports.map((report) => (
+              {filteredReports.map((report) => (
                 <tr key={report.id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="p-4 text-sm text-slate-300 font-mono">{report.id}</td>
                   <td className="p-4 text-sm text-white font-medium">{report.name}</td>

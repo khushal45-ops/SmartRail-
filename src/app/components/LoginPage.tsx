@@ -44,7 +44,7 @@ export type AuthUser = {
 };
 
 type LoginPageProps = {
-  onLogin: (user: AuthUser) => void;
+  onLogin: (user: AuthUser, token: string) => void;
 };
 
 // ─── Animated Background Track Lines ────────────────
@@ -101,10 +101,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [error, setError] = useState("");
   const [showRegister, setShowRegister] = useState(false);
 
-  // Register form state
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
+  const [regRole, setRegRole] = useState<"passenger" | "admin">("passenger");
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState("");
   const [regSuccess, setRegSuccess] = useState(false);
@@ -124,10 +124,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     );
 
     if (mockUser) {
-      localStorage.setItem("token", `smartrail-jwt-${mockUser.role}-${Date.now()}`);
-      localStorage.setItem("user", JSON.stringify({ email: mockUser.email, name: mockUser.name, role: mockUser.role }));
+      const token = `smartrail-jwt-${mockUser.role}-${Date.now()}`;
       setIsLoading(false);
-      onLogin({ email: mockUser.email, name: mockUser.name, role: mockUser.role });
+      onLogin({ email: mockUser.email, name: mockUser.name, role: mockUser.role }, token);
       return;
     }
 
@@ -137,10 +136,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     );
 
     if (registeredUser) {
-      localStorage.setItem("token", `smartrail-jwt-${registeredUser.role}-${Date.now()}`);
-      localStorage.setItem("user", JSON.stringify({ email: registeredUser.email, name: registeredUser.name, role: registeredUser.role }));
+      const token = `smartrail-jwt-${registeredUser.role}-${Date.now()}`;
       setIsLoading(false);
-      onLogin({ email: registeredUser.email, name: registeredUser.name, role: registeredUser.role });
+      onLogin({ email: registeredUser.email, name: registeredUser.name, role: registeredUser.role }, token);
       return;
     }
 
@@ -177,7 +175,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       name: regName.trim(),
       email: emailLower,
       password: regPassword,
-      role: "passenger",
+      role: regRole,
     };
 
     saveRegisteredUser(newUser);
@@ -200,15 +198,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const quickLogin = async (role: "passenger" | "admin") => {
     const user = MOCK_USERS.find((u) => u.role === role)!;
     setEmail(user.email);
-    setPassword(user.password);
+    setPassword("");
     setError("");
-    setIsLoading(true);
-
-    await new Promise((r) => setTimeout(r, 700));
-
-    localStorage.setItem("token", `smartrail-jwt-${user.role}-${Date.now()}`);
-    localStorage.setItem("user", JSON.stringify({ email: user.email, name: user.name, role: user.role }));
-    onLogin({ email: user.email, name: user.name, role: user.role });
+    document.getElementById("login-password")?.focus();
   };
 
   return (
@@ -436,7 +428,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-white">Create Account</h2>
-                    <p className="text-slate-400 text-xs">Join SmartRail as a passenger</p>
+                    <p className="text-slate-400 text-xs">Join SmartRail</p>
                   </div>
                 </div>
 
@@ -479,6 +471,18 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       placeholder="Create a password (min 4 chars)"
                       required
                     />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1.5 block">Role</label>
+                    <select
+                      value={regRole}
+                      onChange={(e) => setRegRole(e.target.value as "passenger" | "admin")}
+                      className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white text-sm outline-none focus:border-emerald-500/50 transition-all"
+                      style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+                    >
+                      <option value="passenger" className="bg-slate-900 text-white">Passenger</option>
+                      <option value="admin" className="bg-slate-900 text-white">Admin</option>
+                    </select>
                   </div>
                 </div>
 

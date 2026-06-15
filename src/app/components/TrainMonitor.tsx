@@ -777,19 +777,37 @@ export function TrainMonitor() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [selected, setSelected] = useState(trains[0]);
   const [activeTab, setActiveTab] = useState<string>("overview");
+  const [showAllZones, setShowAllZones] = useState(false);
 
   const filtered = trains.filter((t) => {
     const ext = getExtended(t.id);
     const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) || t.id.includes(search);
     if (!matchesSearch) return false;
-    
     if (statusFilter === "All") return true;
     if (statusFilter === "Express") return t.type === "Express" || t.type === "Superfast";
-    if (statusFilter === "North Zone") return ext.zone === "Northern";
     if (statusFilter === "Delayed") return t.status === "Delayed" || t.delay > 0;
     if (statusFilter === "On Time") return t.status === "On Time" && t.delay === 0;
     if (statusFilter === "Cancelled") return t.status === "Cancelled";
     if (statusFilter === "All Zones") return true;
+    // Zone filters
+    if (statusFilter === "Northern") return ext.zone === "Northern";
+    if (statusFilter === "Southern") return ext.zone === "Southern";
+    if (statusFilter === "Eastern") return ext.zone === "Eastern";
+    if (statusFilter === "Western") return ext.zone === "Western";
+    if (statusFilter === "Central") return ext.zone === "Central";
+    if (statusFilter === "North Eastern") return ext.zone === "North Eastern";
+    if (statusFilter === "Northeast Frontier") return ext.zone === "Northeast Frontier";
+    if (statusFilter === "South Central") return ext.zone === "South Central";
+    if (statusFilter === "South Eastern") return ext.zone === "South Eastern";
+    if (statusFilter === "South Western") return ext.zone === "South Western";
+    if (statusFilter === "North Western") return ext.zone === "North Western";
+    if (statusFilter === "North Central") return ext.zone === "North Central";
+    if (statusFilter === "West Central") return ext.zone === "West Central";
+    if (statusFilter === "East Central") return ext.zone === "East Central";
+    if (statusFilter === "East Coast") return ext.zone === "East Coast";
+    if (statusFilter === "South Coast") return ext.zone === "South Coast";
+    if (statusFilter === "Konkan") return ext.zone === "Konkan";
+    if (statusFilter === "Metro") return ext.zone === "Metro";
     return true;
   });
 
@@ -840,15 +858,75 @@ export function TrainMonitor() {
               />
             </div>
             {/* Filters */}
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => { setStatusFilter("All"); toast.info("Filter applied: All Status"); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-colors ${statusFilter === "All" ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"}`}><Filter className="w-3 h-3" /> All Status</button>
-              <button onClick={() => { setStatusFilter("Express"); toast.info("Filter applied: Express"); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs transition-colors cursor-pointer ${statusFilter === "Express" ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"}`}>Express</button>
-              <button onClick={() => { setStatusFilter("North Zone"); toast.info("Filter applied: North Zone"); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs transition-colors cursor-pointer ${statusFilter === "North Zone" ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"}`}>North Zone</button>
-              <button onClick={() => { setStatusFilter("Delayed"); toast.info("Filter applied: Delayed"); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs transition-colors cursor-pointer ${statusFilter === "Delayed" ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"}`}>Delayed</button>
-              <button onClick={() => { setStatusFilter("On Time"); toast.info("Filter applied: On Time"); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs transition-colors cursor-pointer ${statusFilter === "On Time" ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"}`}>On Time</button>
-              <button onClick={() => { setStatusFilter("Cancelled"); toast.info("Filter applied: Cancelled"); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs transition-colors cursor-pointer ${statusFilter === "Cancelled" ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"}`}>Cancelled</button>
-              <button onClick={() => { setStatusFilter("All Zones"); toast.info("Filter applied: All Zones"); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs transition-colors cursor-pointer ${statusFilter === "All Zones" ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"}`}>All Zones</button>
+            {/* Status Filters */}
+            <div className="flex flex-wrap gap-1.5">
+              {([
+                { label: "All Status",  id: "All",       icon: "⚡" },
+                { label: "Express",     id: "Express",   icon: "🚄" },
+                { label: "On Time",     id: "On Time",   icon: "✅" },
+                { label: "Delayed",     id: "Delayed",   icon: "⚠️" },
+                { label: "Cancelled",   id: "Cancelled", icon: "❌" },
+              ] as const).map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => { setStatusFilter(f.id); toast.info(`Filter: ${f.label}`); }}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-colors ${statusFilter === f.id ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"}`}
+                >
+                  <span>{f.icon}</span> {f.label}
+                </button>
+              ))}
             </div>
+
+            {/* Zone Filters */}
+            {(() => {
+              const allZones = [
+                { label: "All Zones",    id: "All Zones",          icon: "🌐" },
+                { label: "Northern",     id: "Northern",           icon: "🔵" },
+                { label: "Southern",     id: "Southern",           icon: "🟢" },
+                { label: "Eastern",      id: "Eastern",            icon: "🟡" },
+                { label: "Western",      id: "Western",            icon: "🟠" },
+                { label: "Central",      id: "Central",            icon: "🔴" },
+                { label: "N. Eastern",   id: "North Eastern",      icon: "🟣" },
+                { label: "NE Frontier",  id: "Northeast Frontier", icon: "⚪" },
+                { label: "S. Central",   id: "South Central",      icon: "🟤" },
+                { label: "S. Eastern",   id: "South Eastern",      icon: "🔵" },
+                { label: "S. Western",   id: "South Western",      icon: "🟢" },
+                { label: "N. Western",   id: "North Western",      icon: "🟡" },
+                { label: "N. Central",   id: "North Central",      icon: "🟠" },
+                { label: "W. Central",   id: "West Central",       icon: "🔴" },
+                { label: "E. Central",   id: "East Central",       icon: "🟣" },
+                { label: "East Coast",   id: "East Coast",         icon: "⚪" },
+                { label: "South Coast",  id: "South Coast",        icon: "🟤" },
+                { label: "Konkan",       id: "Konkan",             icon: "🔵" },
+                { label: "Metro",        id: "Metro",              icon: "🚇" },
+              ] as const;
+              const VISIBLE = 5;
+              const visible = showAllZones ? allZones : allZones.slice(0, VISIBLE);
+              const remaining = allZones.length - VISIBLE;
+              return (
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  {visible.map(z => (
+                    <button
+                      key={z.id}
+                      onClick={() => { setStatusFilter(z.id); toast.info(`Zone: ${z.label}`); }}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-colors ${
+                        statusFilter === z.id
+                          ? "bg-blue-500/20 border-blue-500/30 text-blue-300"
+                          : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-300"
+                      }`}
+                    >
+                      <span className="text-[10px]">{z.icon}</span> {z.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setShowAllZones(v => !v)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-colors bg-white/5 border-white/10 text-emerald-400 hover:bg-white/10"
+                  >
+                    {showAllZones ? "← Less" : `+${remaining} more`}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar glass-panel rounded-xl p-2 flex flex-col gap-2">

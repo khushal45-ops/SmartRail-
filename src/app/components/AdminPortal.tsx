@@ -226,7 +226,13 @@ function OverviewTab() {
             onClick: async () => {
               try {
                 toast.loading("Generating report...", { id: "report" });
-                await generateReport("daily", { date: "today" });
+                const blob = await generateReport("daily", { date: "today" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `admin_report_daily_${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
                 toast.success("Report generated and downloaded successfully.", { id: "report" });
               } catch (e) {
                 toast.error("Failed to generate report.", { id: "report" });

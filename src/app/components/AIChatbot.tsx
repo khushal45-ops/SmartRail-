@@ -87,14 +87,25 @@ export function AIChatbot() {
     setInput("");
     setIsTyping(true);
     
+    // Try the live AI backend first, fall back to local responses
     try {
       const response = await sendChatMessage(text);
-      setMessages((prev) => [...prev, { role: "assistant", text: response.reply || getResponse(text), time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }]);
-    } catch (e) {
-      setMessages((prev) => [...prev, { role: "assistant", text: "Sorry, I am having trouble connecting to the network right now.", time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }]);
+      const reply = response.reply;
+      if (reply) {
+        setMessages((prev) => [...prev, { role: "assistant", text: reply, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }]);
+        return;
+      }
+    } catch (_) {
+      // Backend unavailable — use local response engine
     } finally {
-      setIsTyping(false);
+      // give a natural typing feel even for local responses
     }
+
+    // Local response engine (always works offline)
+    await new Promise(resolve => setTimeout(resolve, 600 + Math.random() * 600));
+    const localReply = getResponse(text);
+    setMessages((prev) => [...prev, { role: "assistant", text: localReply, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }]);
+    setIsTyping(false);
   };
 
   const reset = () => {

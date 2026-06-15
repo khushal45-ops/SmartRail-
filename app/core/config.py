@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     app_name: str = "Railway Management System API"
     app_version: str = "1.0.0"
-    debug: bool = False
+    debug: bool = True
     api_v1_prefix: str = "/api/v1"
 
     database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/railway_db"
@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     sendgrid_from_email: str = ""
     alert_sms_to: str = ""
     alert_email_to: str = ""
+    gemini_api_key: str = ""
 
 
 @lru_cache

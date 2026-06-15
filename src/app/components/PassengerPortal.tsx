@@ -80,7 +80,7 @@ function getRelocationOptions(from: string, to: string, currentTrainNo: string) 
   return { direct, connecting };
 }
 
-function PNRResult({ record, onRelocate }: { record: typeof pnrRecords[string]; onRelocate: (newTrainNo: string, newTrainName: string, departure: string, arrival: string) => void }) {
+function PNRResult({ record, onRelocate, onNavigateToRelocation }: { record: typeof pnrRecords[string]; onRelocate: (newTrainNo: string, newTrainName: string, departure: string, arrival: string) => void; onNavigateToRelocation?: () => void; }) {
   const allConfirmed = record.passengers.every((p) => p.status === "CNF");
   const hasWaiting = record.passengers.some((p) => p.status.startsWith("WL"));
   
@@ -90,7 +90,6 @@ function PNRResult({ record, onRelocate }: { record: typeof pnrRecords[string]; 
   const delayMinutes = trainDetail ? trainDetail.delay : (record.trainNo === "12951" ? 25 : 0);
 
   const { direct, connecting } = getRelocationOptions(record.from, record.to, record.trainNo);
-  const [showRelocator, setShowRelocator] = useState(false);
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in duration-300">
@@ -102,8 +101,11 @@ function PNRResult({ record, onRelocate }: { record: typeof pnrRecords[string]; 
                 <TicketIcon className="w-6 h-6 text-emerald-400" />
              </div>
              <div>
-               <div className="text-xl font-bold text-white tracking-tight">{record.trainName}</div>
-               <div className="text-slate-400 text-sm font-mono mt-0.5">Train No. {record.trainNo} • {record.class} Class</div>
+               <div className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                 {record.trainName}
+                 {isDelayed && <Badge className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 shadow-[0_0_10px_rgba(239,68,68,0.2)]">DELAYED</Badge>}
+               </div>
+               <div className="text-[#e2e8f0] text-sm font-mono mt-0.5">Train No. {record.trainNo} • {record.class} Class</div>
              </div>
           </div>
           <Badge className={`px-3 py-1 text-sm font-medium ${allConfirmed ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : hasWaiting ? "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]" : "bg-teal-500/10 text-teal-400 border-teal-500/30"}`}>
@@ -121,10 +123,10 @@ function PNRResult({ record, onRelocate }: { record: typeof pnrRecords[string]; 
               </div>
             </div>
             <button 
-              onClick={() => setShowRelocator(!showRelocator)}
+              onClick={() => onNavigateToRelocation?.()}
               className="px-3.5 py-1.5 bg-red-500/20 hover:bg-red-500/35 border border-red-400/40 text-red-300 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
             >
-              {showRelocator ? "Hide Alternatives" : "Relocate Ticket"}
+              Relocate Ticket
             </button>
           </div>
         )}
@@ -172,120 +174,7 @@ function PNRResult({ record, onRelocate }: { record: typeof pnrRecords[string]; 
         </div>
       </div>
 
-      {/* Dynamic Ticket Relocator Panel */}
-      {showRelocator && (
-        <div className="glass-panel border-emerald-500/20 rounded-xl p-6 flex flex-col gap-5 bg-emerald-950/10 shadow-[0_0_30px_rgba(16,185,129,0.05)] animate-in slide-in-from-top duration-300">
-          <div>
-            <h4 className="text-white font-bold text-base flex items-center gap-2">
-              <Activity className="w-5 h-5 text-emerald-400" /> Smart Ticket Relocation & Alternate Routing
-            </h4>
-            <p className="text-slate-400 text-xs mt-1">Available alternative routes for journey from {record.from} to {record.to}. Seats are guaranteed on selection.</p>
-          </div>
-
-          {/* Direct Alternate Trains */}
-          <div className="flex flex-col gap-3">
-            <div className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">Option A: Direct Trains (Same Route)</div>
-            {direct.length === 0 ? (
-              <div className="text-slate-500 text-xs bg-black/20 p-3 rounded-lg border border-white/5">No direct alternative trains with available seats found on this track.</div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {direct.map((t) => (
-                  <div key={t.id} className="bg-black/30 border border-white/5 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-emerald-500/30 transition-all">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-bold text-sm">{t.name}</span>
-                        <span className="text-xs text-slate-400 font-mono">({t.id})</span>
-                        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">{t.type}</Badge>
-                      </div>
-                      <div className="text-slate-400 text-xs mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span>Departs: <strong className="text-slate-200">{t.departure}</strong></span>
-                        <span>Arrives: <strong className="text-slate-200">{t.arrival}</strong></span>
-                        <span>Platform: <strong className="text-slate-200">{t.platform}</strong></span>
-                        <span className="text-emerald-400 font-medium">{t.availableSeats} Seats Available</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        onRelocate(t.id, t.name, t.departure, t.arrival);
-                        setShowRelocator(false);
-                      }}
-                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-[#040A15] text-xs font-semibold rounded-lg transition-colors whitespace-nowrap"
-                    >
-                      Relocate Directly
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Connecting Alternate Trains */}
-          <div className="flex flex-col gap-3">
-            <div className="text-teal-400 text-xs font-semibold uppercase tracking-wider">Option B: Connecting Trains (2-Train Journey)</div>
-            {connecting.length === 0 ? (
-              <div className="text-slate-500 text-xs bg-black/20 p-3 rounded-lg border border-white/5">No connecting alternative routes available.</div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {connecting.map((route, idx) => (
-                  <div key={idx} className="bg-black/30 border border-white/5 rounded-xl p-4 flex flex-col gap-4 hover:border-teal-500/30 transition-all">
-                    {/* Visual Connector Flow */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex-1 flex flex-col md:flex-row items-start md:items-center gap-3">
-                        {/* Train 1 */}
-                        <div className="flex-1 bg-black/20 p-2.5 rounded-lg border border-white/5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-white font-semibold text-xs">{route.train1.name}</span>
-                            <span className="text-[10px] text-emerald-400">{route.train1.availableSeats} Seats</span>
-                          </div>
-                          <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
-                            <span>{record.from.split(" (")[0]} ({route.train1.departure})</span>
-                            <span>→</span>
-                            <span className="text-slate-300 font-medium">{route.intermediate.split(" (")[0]} ({route.train1.arrival})</span>
-                          </div>
-                        </div>
-
-                        {/* Connection Badge */}
-                        <div className="self-center flex flex-col items-center">
-                          <span className="px-2 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 text-[9px] font-bold rounded">Change Train</span>
-                          <span className="text-[9px] text-slate-500 mt-0.5">{route.intermediate.split(" (")[0]}</span>
-                        </div>
-
-                        {/* Train 2 */}
-                        <div className="flex-1 bg-black/20 p-2.5 rounded-lg border border-white/5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-white font-semibold text-xs">{route.train2.name}</span>
-                            <span className="text-[10px] text-emerald-400">{route.train2.availableSeats} Seats</span>
-                          </div>
-                          <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
-                            <span className="text-slate-300 font-medium">{route.intermediate.split(" (")[0]} ({route.train2.departure})</span>
-                            <span>→</span>
-                            <span>{record.to.split(" (")[0]} ({route.train2.arrival})</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          onRelocate(
-                            `${route.train1.id} & ${route.train2.id}`, 
-                            `${route.train1.name} + ${route.train2.name} (via ${route.intermediate.split(" (")[0]})`, 
-                            route.train1.departure, 
-                            route.train2.arrival
-                          );
-                          setShowRelocator(false);
-                        }}
-                        className="px-4 py-2.5 bg-teal-500 hover:bg-teal-600 text-[#040A15] text-xs font-semibold rounded-lg transition-colors whitespace-nowrap self-end md:self-center"
-                      >
-                        Relocate Connect
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Dynamic Ticket Relocator Panel has been moved to its own tab */}
 
       {hasWaiting && (
         <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-5 flex items-start gap-4 shadow-[0_0_20px_rgba(245,158,11,0.05)]">
@@ -321,6 +210,14 @@ export function PassengerPortal() {
   const [activeTab, setActiveTab] = useState("pnr");
   const [isSearching, setIsSearching] = useState(false);
   const [isRelocating, setIsRelocating] = useState(false);
+
+  const delayedJourneys = ["2451369874", "4867293015", "7234891056"].filter(key => {
+    const rec = localPnrRecords[key];
+    if (!rec) return false;
+    if (rec.chartStatus === "Relocated & Confirmed") return false;
+    const trainDetail = trains.find(t => t.id === rec.trainNo);
+    return trainDetail ? (trainDetail.status === "Delayed" || trainDetail.delay > 0) : rec.trainNo === "12951";
+  });
 
   const handleSearch = async (searchPnrStr?: string) => {
     const pnrToSearch = typeof searchPnrStr === "string" ? searchPnrStr.trim() : pnr.trim();
@@ -394,6 +291,7 @@ export function PassengerPortal() {
       }));
       setSuccessMsg(`Your booking has been successfully relocated to ${newTrainName} (Train No: ${newTrainNo}). Seat confirmed in Coach A1.`);
       toast.success("Relocation successful!");
+      setActiveTab("journeys");
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       toast.error("Relocation request failed.");
@@ -421,12 +319,12 @@ export function PassengerPortal() {
          {[
            { id: "pnr", label: "PNR Status & Enquiry" },
            { id: "journeys", label: "My Upcoming Journeys" },
-           { id: "reallocation", label: "AI Auto-Reallocation" }
+           { id: "reallocation", label: "Smart Ticket Reallocation" }
          ].map((tab) => (
            <button
              key={tab.id}
              onClick={() => setActiveTab(tab.id)}
-             className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
+             className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? "bg-[#00ff87]/15 text-[#00ff87] border border-[#00ff87]/20 shadow-[0_0_15px_rgba(0,255,135,0.15)]" : "text-[#e2e8f0] hover:text-white hover:bg-white/5 border border-transparent"}`}
            >
              {tab.label}
            </button>
@@ -465,7 +363,7 @@ export function PassengerPortal() {
                 </div>
               </div>
 
-              {result && <PNRResult record={result} onRelocate={(newTrainNo, newTrainName, dep, arr) => handleRelocate(result.pnr, newTrainNo, newTrainName, dep, arr)} />}
+              {result && <PNRResult record={result} onNavigateToRelocation={() => setActiveTab("reallocation")} onRelocate={(newTrainNo, newTrainName, dep, arr) => handleRelocate(result.pnr, newTrainNo, newTrainName, dep, arr)} />}
             </div>
 
             <div className="flex flex-col gap-6">
@@ -504,7 +402,7 @@ export function PassengerPortal() {
 
         {activeTab === "journeys" && (
           <div className="flex flex-col gap-4 animate-in fade-in">
-            {["2451369874", "7234891056"].map((key) => {
+            {["2451369874", "4867293015", "7234891056"].map((key) => {
               const rec = localPnrRecords[key];
               if (!rec) return null;
               const allConfirmed = rec.passengers.every((p) => p.status === "CNF");
@@ -538,49 +436,180 @@ export function PassengerPortal() {
         )}
 
         {activeTab === "reallocation" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in">
-            <div className="glass-panel rounded-xl flex flex-col overflow-hidden">
-              <div className="p-6 border-b border-white/5 bg-[#0B1D3A]/50">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3 tracking-tight"><RefreshCw className="w-5 h-5 text-emerald-400" /> Auto-Reallocation Engine</h3>
-              </div>
-              <div className="p-6 flex flex-col gap-6 bg-black/20 flex-1">
-                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 shadow-[0_0_20px_rgba(16,185,129,0.05)]">
-                  <div className="flex items-center gap-2 mb-3"><div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" /><span className="text-emerald-300 font-semibold tracking-wide">System Active & Monitoring</span></div>
-                  <p className="text-slate-300 text-sm leading-relaxed">Our predictive AI continuously monitors real-time cancellations across the network. Waitlisted passengers are automatically mapped to newly available confirmed seats based on booking priority and passenger profile matching.</p>
-                </div>
-                <div className="flex flex-col gap-4 text-sm mt-2">
-                  <div className="flex justify-between items-center py-2 border-b border-white/5"><span className="text-slate-400 font-medium">Reallocations Today (System-wide)</span><span className="text-white font-mono text-base font-medium">24,892</span></div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5"><span className="text-slate-400 font-medium">Algorithm Match Rate</span><span className="text-emerald-400 font-mono text-base font-medium">97.4%</span></div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5"><span className="text-slate-400 font-medium">Avg Processing Latency</span><span className="text-teal-400 font-mono text-base font-medium">1.2s</span></div>
-                  <div className="flex justify-between items-center py-2"><span className="text-slate-400 font-medium">Your Waitlist Upgrades (YTD)</span><span className="text-white font-mono text-base font-medium">4</span></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass-panel rounded-xl flex flex-col overflow-hidden">
-              <div className="p-6 border-b border-white/5 bg-[#0B1D3A]/50">
-                <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-2"><Activity className="w-5 h-5 text-blue-400" /> Operational Flow</h3>
-              </div>
-              <div className="p-6 bg-black/20 flex-1 flex flex-col justify-center">
-                <div className="flex flex-col gap-6 relative">
-                  <div className="absolute left-5 top-5 bottom-5 w-0.5 bg-gradient-to-b from-emerald-500/50 via-teal-500/50 to-blue-500/50 rounded-full" />
-                  {[
-                    { step: "1", title: "Cancellation Detected", desc: "A confirmed seat is surrendered in real-time.", color: "text-emerald-400", bg: "bg-emerald-500/20" },
-                    { step: "2", title: "Priority Resolution", desc: "Waitlist queue is instantly analyzed and ranked.", color: "text-teal-400", bg: "bg-teal-500/20" },
-                    { step: "3", title: "Smart Assignment", desc: "Seat is automatically allocated to the optimal passenger.", color: "text-blue-400", bg: "bg-blue-500/20" },
-                    { step: "4", title: "Instant Notification", desc: "Digital ticket is updated and passenger is alerted via SMS/Email.", color: "text-purple-400", bg: "bg-purple-500/20" },
-                  ].map((item) => (
-                    <div key={item.step} className="flex items-start gap-4 relative z-10">
-                      <div className={`w-10 h-10 rounded-xl ${item.bg} ${item.color} flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-inner border border-white/5 backdrop-blur-md`}>{item.step}</div>
-                      <div className="pt-2">
-                        <div className="text-white text-base font-semibold tracking-tight mb-1">{item.title}</div>
-                        <div className="text-slate-400 text-sm leading-relaxed">{item.desc}</div>
-                      </div>
+          <div className="flex flex-col gap-10 animate-in fade-in">
+            {delayedJourneys.length === 0 ? (
+               <div className="glass-panel rounded-xl p-10 flex flex-col items-center justify-center text-center">
+                  <CheckCircle className="w-12 h-12 text-emerald-400 mb-4" />
+                  <h3 className="text-xl font-bold text-white tracking-tight">All Trains on Schedule</h3>
+                  <p className="text-slate-400 mt-2 max-w-md">None of your upcoming journeys are delayed. You do not need ticket reallocation at this time.</p>
+               </div>
+            ) : (
+            delayedJourneys.map(key => {
+              const rec = localPnrRecords[key];
+              return (
+                <div key={key} className="flex flex-col gap-4">
+                  {/* Original Booking Overview Card */}
+                  <div className="bg-[#0a0f1e] border border-white/10 rounded-xl overflow-hidden relative shadow-lg">
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500"></div>
+                    <div className="p-6 pl-8">
+                       <div className="text-slate-400 text-xs font-bold tracking-wider uppercase mb-6">Original Booking Overview</div>
+                       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                          {/* Train details */}
+                          <div className="flex items-center gap-4">
+                             <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
+                                <Train className="w-7 h-7 text-slate-300" />
+                             </div>
+                             <div>
+                                <div className="text-blue-400 text-2xl font-bold tracking-tight">Train {rec.trainNo}</div>
+                                <div className="text-slate-400 text-sm mt-0.5">{rec.trainName}</div>
+                             </div>
+                          </div>
+                          
+                          {/* Times */}
+                          <div className="flex items-center justify-between flex-1 max-w-md mx-auto md:mx-0 w-full gap-4">
+                             <div className="text-center min-w-[80px]">
+                                <div className="text-2xl font-bold text-white">{rec.departure}</div>
+                                <div className="text-slate-400 text-sm">{rec.from.split(' (')[0]}</div>
+                             </div>
+                             
+                             <div className="flex flex-col items-center gap-2 flex-1">
+                                <div className="text-slate-400 text-xs">15h 40m</div>
+                                <div className="flex items-center w-full">
+                                   <div className="h-0.5 w-full bg-white/10"></div>
+                                   <Clock className="w-5 h-5 text-red-400 mx-3 flex-shrink-0" />
+                                   <div className="h-0.5 w-full bg-white/10"></div>
+                                </div>
+                             </div>
+                             
+                             <div className="text-center min-w-[80px]">
+                                <div className="text-2xl font-bold text-slate-500 line-through decoration-red-500 decoration-2">{rec.arrival}</div>
+                                <div className="text-slate-400 text-sm">{rec.to.split(' (')[0]}</div>
+                             </div>
+                          </div>
+                          
+                          {/* Delayed badge */}
+                          <div className="flex-shrink-0">
+                             <Badge className="bg-red-500 hover:bg-red-600 text-white rounded-md px-3 py-1.5 text-sm font-semibold shadow-[0_0_15px_rgba(239,68,68,0.3)]">DELAYED 2h 15m</Badge>
+                          </div>
+                       </div>
                     </div>
-                  ))}
+                  </div>
+                  
+                  {/* AI Recommendation Banner */}
+                  <div className="bg-[#00ff87]/10 border border-[#00ff87]/20 rounded-xl p-4 flex items-center gap-3">
+                     <div className="w-8 h-8 bg-[#00ff87]/20 rounded-full flex-shrink-0 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-[#00ff87]">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                     </div>
+                     <span className="text-[#e2e8f0] text-sm md:text-base">
+                        <strong className="text-[#00ff87] mr-1">AI Recommendation:</strong> 
+                        Option A offers the fastest arrival (1h earlier) with a direct route.
+                     </span>
+                  </div>
+                  
+                  {/* Options Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     {/* Option A */}
+                     <div className="bg-[#0d1526] border border-[#00ff87] rounded-xl relative flex flex-col shadow-[0_0_20px_rgba(0,255,135,0.15)] hover:-translate-y-1 transition-transform duration-300">
+                        <div className="absolute top-0 right-0 bg-[#00ff87] text-[#0a0f1e] text-xs font-bold px-4 py-1.5 rounded-bl-xl rounded-tr-xl shadow-md">BEST MATCH</div>
+                        <div className="p-6 border-b border-[#00ff87]/20 bg-[#00ff87]/5 rounded-t-xl">
+                           <div className="flex items-center gap-3">
+                              <span className="text-[#00ff87] font-bold text-xl bg-[#00ff87]/10 w-9 h-9 flex items-center justify-center rounded-lg border border-[#00ff87]/30">A</span>
+                              <div>
+                                 <div className="text-lg font-bold text-white tracking-tight">Train 12908</div>
+                                 <div className="text-emerald-400/80 text-xs mt-0.5 font-medium">Maharashtra Sampark Kranti</div>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="p-6 flex-1 flex flex-col gap-5">
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Departure</span>
+                              <span className="text-white font-bold text-base">15:45</span>
+                           </div>
+                           <div className="w-full h-px bg-white/5"></div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Impact</span>
+                              <span className="text-[#00ff87] font-semibold text-base">Arrives 1h earlier</span>
+                           </div>
+                           <div className="w-full h-px bg-white/5"></div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Fare Difference</span>
+                              <span className="text-amber-400 font-bold text-base">+ 15% Surcharge</span>
+                           </div>
+                        </div>
+                        <div className="p-6 pt-0 mt-auto">
+                           <button onClick={() => handleRelocate(rec.pnr, "12908", "Maharashtra Sampark Kranti", "15:45", "05:00")} className="w-full py-3.5 bg-[#00ff87] hover:bg-[#00ff87]/80 text-[#0a0f1e] font-bold rounded-lg transition-colors shadow-lg">Select & Rebook</button>
+                        </div>
+                     </div>
+                     
+                     {/* Option B */}
+                     <div className="bg-[#0d1526] border border-white/10 rounded-xl relative flex flex-col hover:-translate-y-1 transition-transform duration-300 hover:border-white/30">
+                        <div className="p-6 border-b border-white/10 bg-white/5 rounded-t-xl">
+                           <div className="flex items-center gap-3">
+                              <span className="text-slate-300 font-bold text-xl bg-white/10 w-9 h-9 flex items-center justify-center rounded-lg border border-white/10">B</span>
+                              <div>
+                                 <div className="text-lg font-bold text-white tracking-tight">Train 22210</div>
+                                 <div className="text-slate-400 text-xs mt-0.5 font-medium">Mumbai Duronto Express</div>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="p-6 flex-1 flex flex-col gap-5">
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Departure</span>
+                              <span className="text-white font-bold text-base">16:20</span>
+                           </div>
+                           <div className="w-full h-px bg-white/5"></div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Impact</span>
+                              <span className="text-teal-400 font-semibold text-base">Premium Upgrade</span>
+                           </div>
+                           <div className="w-full h-px bg-white/5"></div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Fare Difference</span>
+                              <span className="text-amber-400 font-bold text-base">+ 15% Surcharge</span>
+                           </div>
+                        </div>
+                        <div className="p-6 pt-0 mt-auto">
+                           <button onClick={() => handleRelocate(rec.pnr, "22210", "Mumbai Duronto Express", "16:20", "05:30")} className="w-full py-3.5 bg-transparent border border-white/20 hover:bg-white/5 text-white font-bold rounded-lg transition-colors">Select Option</button>
+                        </div>
+                     </div>
+
+                     {/* Option C */}
+                     <div className="bg-[#0d1526] border border-white/10 rounded-xl relative flex flex-col hover:-translate-y-1 transition-transform duration-300 hover:border-white/30">
+                        <div className="p-6 border-b border-white/10 bg-white/5 rounded-t-xl">
+                           <div className="flex items-center gap-3">
+                              <span className="text-slate-300 font-bold text-xl bg-white/10 w-9 h-9 flex items-center justify-center rounded-lg border border-white/10">C</span>
+                              <div>
+                                 <div className="text-lg font-bold text-white tracking-tight">Split Journey</div>
+                                 <div className="text-slate-400 text-xs mt-0.5 font-medium">Via Surat (ST)</div>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="p-6 flex-1 flex flex-col gap-5">
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Departure</span>
+                              <span className="text-white font-bold text-base">15:00</span>
+                           </div>
+                           <div className="w-full h-px bg-white/5"></div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Impact</span>
+                              <span className="text-emerald-400 font-semibold text-xs text-right max-w-[140px]">Leg 1 Free, Leg 2 at 50%</span>
+                           </div>
+                           <div className="w-full h-px bg-white/5"></div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">Fare Difference</span>
+                              <span className="text-emerald-400 font-bold text-base">+ 50% Fare</span>
+                           </div>
+                        </div>
+                        <div className="p-6 pt-0 mt-auto">
+                           <button onClick={() => handleRelocate(rec.pnr, "SPLIT", "Split Journey (via ST)", "15:00", "07:00")} className="w-full py-3.5 bg-transparent border border-white/20 hover:bg-white/5 text-white font-bold rounded-lg transition-colors">Select Option</button>
+                        </div>
+                     </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            }))}
           </div>
         )}
       </div>

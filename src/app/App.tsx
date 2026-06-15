@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Routes, Route, Navigate, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { TrainMonitor } from "./components/TrainMonitor";
 import { AlertSystem } from "./components/AlertSystem";
 import { AdminPortal } from "./components/AdminPortal";
@@ -11,27 +12,28 @@ import { PassengerPortal } from "./components/PassengerPortal";
 import { RailwayOperationsMap } from "./components/RailwayOperationsMap";
 import { RailLogo } from "./components/RailLogo";
 import { LoginPage, AuthUser } from "./components/LoginPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 import { alerts } from "./data/mockData";
 import {
   Train, Bell, Shield, BarChart3, Bot, Settings2, FileText,
-  Menu, X, ChevronRight, Zap, Search, Sun, MapPin, Clock, Map,
+  Menu, X, ChevronRight, Zap, Search, Sun, Moon, MapPin, Clock, Map,
   LayoutDashboard, TicketIcon, Loader2, LogOut, LogIn
 } from "lucide-react";
 import { toast } from "sonner";
 
-type View = "dashboard" | "trains" | "alerts" | "passenger" | "admin" | "analytics" | "chatbot" | "reports" | "settings" | "map";
 type Role = "passenger" | "admin";
 
-const navItems: { id: View; label: string; icon: any; adminOnly?: boolean; passengerOnly?: boolean; badge?: string }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, passengerOnly: true },
-  { id: "trains", label: "Train Monitor", icon: Train },
-  { id: "alerts", label: "Alerts & Notifications", icon: Bell },
-  { id: "passenger", label: "Passenger Portal", icon: TicketIcon, passengerOnly: true },
-  { id: "admin", label: "Admin Portal", icon: Shield, adminOnly: true },
-  { id: "analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
-  { id: "chatbot", label: "AI Assistant", icon: Bot },
-  { id: "reports", label: "Reports", icon: FileText, adminOnly: true },
-  { id: "settings", label: "Settings", icon: Settings2, adminOnly: true },
+const navItems = [
+  { id: "dashboard", path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, passengerOnly: true },
+  { id: "trains", path: "/trains", label: "Train Monitor", icon: Train },
+  { id: "alerts", path: "/alerts", label: "Alerts & Notifications", icon: Bell },
+  { id: "passenger", path: "/passenger", label: "Passenger Portal", icon: TicketIcon, passengerOnly: true },
+  { id: "admin", path: "/admin/dashboard", label: "Admin Portal", icon: Shield, adminOnly: true },
+  { id: "analytics", path: "/admin/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
+  { id: "chatbot", path: "/chatbot", label: "AI Assistant", icon: Bot },
+  { id: "reports", path: "/admin/reports", label: "Reports", icon: FileText, adminOnly: true },
+  { id: "settings", path: "/admin/settings", label: "Settings", icon: Settings2, adminOnly: true },
 ];
 
 function NavItem({ item, active, onClick, role }: { item: typeof navItems[0]; active: boolean; onClick: () => void; role: Role }) {
@@ -62,33 +64,19 @@ function NavItem({ item, active, onClick, role }: { item: typeof navItems[0]; ac
   );
 }
 
-export default function App() {
-  // Restore user session from localStorage
-  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      if (stored && localStorage.getItem("token")) return JSON.parse(stored);
-    } catch { /* ignore */ }
-    return null;
-  });
-
-  const isLoggedIn = !!authUser;
-  const [view, setView] = useState<View>(authUser?.role === "passenger" ? "dashboard" : "trains");
-  const [role, setRole] = useState<Role>(authUser?.role ?? "admin");
+function Layout() {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const role = user?.role ?? "admin";
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [time, setTime] = useState(new Date());
-
-  const handleAuthLogin = (user: AuthUser) => {
-    setAuthUser(user);
-    setRole(user.role);
-    setView(user.role === "passenger" ? "dashboard" : "trains");
-    toast.success(`Welcome back, ${user.name}!`);
-  };
+  const [zone, setZone] = useState("Northern Zone");
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setAuthUser(null);
+    logout();
+    navigate("/login");
     toast.success("Logged out successfully.");
   };
 
@@ -97,30 +85,8 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  const renderView = () => {
-    switch (view) {
-      case "dashboard": return <Dashboard onNavigate={(v) => setView(v as View)} role={role} />;
-      case "trains": return <TrainMonitor />;
-      case "alerts": return <AlertSystem />;
-      case "passenger": return <PassengerPortal />;
-      case "map": return <RailwayOperationsMap />;
-      case "admin": return <AdminPortal />;
-      case "analytics": return <Analytics />;
-      case "chatbot": return <AIChatbot />;
-      case "reports": return <Reports />;
-      case "settings": return <Settings />;
-      default: return <TrainMonitor />;
-    }
-  };
-
-  const currentNav = navItems.find((n) => n.id === view);
-
-  // Gate: show login page when not authenticated
-  if (!isLoggedIn) {
-    return <LoginPage onLogin={handleAuthLogin} />;
-  }
-
-  const userName = authUser?.name ?? (role === "admin" ? "Admin User" : "Rajesh Kumar");
+  const currentNav = navItems.find((n) => location.pathname.startsWith(n.path)) || navItems[0];
+  const userName = user?.name ?? (role === "admin" ? "Admin User" : "Rajesh Kumar");
   const userInitials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
@@ -149,7 +115,7 @@ export default function App() {
         {/* Role Indicator (locked to login role) */}
         <div className="px-4 py-4 border-b border-white/5">
           <div className="flex rounded-xl overflow-hidden bg-black/20 p-1 border border-white/5 shadow-inner">
-            {authUser?.role === "passenger" ? (
+            {role === "passenger" ? (
               <div className="flex-1 py-2 text-xs font-medium rounded-lg text-center bg-emerald-600/90 text-white shadow-md">
                 Passenger Mode
               </div>
@@ -167,8 +133,8 @@ export default function App() {
             <NavItem
               key={item.id}
               item={item}
-              active={view === item.id}
-              onClick={() => { setView(item.id); setSidebarOpen(false); }}
+              active={location.pathname === item.path}
+              onClick={() => { navigate(item.path); setSidebarOpen(false); }}
               role={role}
             />
           ))}
@@ -220,17 +186,32 @@ export default function App() {
             </div>
 
             {/* Zone Selector */}
-            <div className="hidden md:flex items-center gap-2 text-slate-300 text-sm border-l border-white/10 pl-4 cursor-pointer hover:text-white transition-colors">
+            <div className="hidden md:flex items-center gap-2 text-slate-300 text-sm border-l border-white/10 pl-4 cursor-pointer hover:text-white transition-colors relative group">
               <MapPin className="w-4 h-4 text-emerald-400/80" />
-              Northern Zone
+              <select 
+                value={zone} 
+                onChange={(e) => {
+                  setZone(e.target.value);
+                  toast.success(`Zone changed to ${e.target.value}`);
+                }}
+                className="bg-transparent text-slate-300 border-none outline-none cursor-pointer hover:text-white transition-colors"
+                style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+              >
+                <option value="Northern Zone" className="bg-slate-900 text-white">Northern Zone</option>
+                <option value="Western Zone" className="bg-slate-900 text-white">Western Zone</option>
+                <option value="Southern Zone" className="bg-slate-900 text-white">Southern Zone</option>
+                <option value="Eastern Zone" className="bg-slate-900 text-white">Eastern Zone</option>
+                <option value="Central Zone" className="bg-slate-900 text-white">Central Zone</option>
+              </select>
             </div>
 
             <div className="h-6 w-px bg-white/10 hidden sm:block mx-1"></div>
 
-            <button className="text-slate-400 hover:text-emerald-400 transition-colors">
-              <Sun className="w-5 h-5" />
-            </button>
-            <button className="text-slate-400 hover:text-emerald-400 transition-colors relative">
+            <button 
+              onClick={() => navigate('/alerts')}
+              className="text-slate-400 hover:text-emerald-400 transition-colors relative"
+              title="Notifications"
+            >
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#0B1D3A]"></span>
             </button>
@@ -251,15 +232,63 @@ export default function App() {
         </header>
 
         {/* Page Content */}
-        <main className={`flex-1 relative z-10 ${view === "map" ? "overflow-hidden p-0" : "overflow-y-auto p-4 lg:p-8 custom-scrollbar"}`}>
-          {view !== "map" && (
+        <main className={`flex-1 relative z-10 ${location.pathname === "/admin/map" ? "overflow-hidden p-0" : "overflow-y-auto p-4 lg:p-8 custom-scrollbar"}`}>
+          {location.pathname !== "/admin/map" && (
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
           )}
-          <div className={`relative z-10 h-full ${view === "map" ? "" : "max-w-7xl mx-auto"}`}>
-            {renderView()}
+          <div className={`relative z-10 h-full ${location.pathname === "/admin/map" ? "" : "max-w-7xl mx-auto"}`}>
+            <Outlet />
           </div>
         </main>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogin = (user: AuthUser, token: string) => {
+    login(user, token);
+    if (user.role === "admin") {
+      navigate("/admin/dashboard");
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+      
+      {/* Passenger Routes */}
+      <Route element={<ProtectedRoute requiredRole="passenger" />}>
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Dashboard onNavigate={(v) => navigate('/' + v)} role="passenger" />} />
+          <Route path="/passenger" element={<PassengerPortal />} />
+          <Route path="/trains" element={<TrainMonitor />} />
+          <Route path="/alerts" element={<AlertSystem />} />
+          <Route path="/chatbot" element={<AIChatbot />} />
+        </Route>
+      </Route>
+
+      {/* Admin Routes */}
+      <Route element={<ProtectedRoute requiredRole="admin" />}>
+        <Route element={<Layout />}>
+          <Route path="/admin/dashboard" element={<AdminPortal />} />
+          <Route path="/admin/analytics" element={<Analytics />} />
+          <Route path="/admin/reports" element={<Reports />} />
+          <Route path="/admin/settings" element={<Settings />} />
+          <Route path="/trains" element={<TrainMonitor />} />
+          <Route path="/alerts" element={<AlertSystem />} />
+          <Route path="/admin/map" element={<RailwayOperationsMap />} />
+          <Route path="/chatbot" element={<AIChatbot />} />
+        </Route>
+      </Route>
+
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }

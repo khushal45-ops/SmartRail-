@@ -1,19 +1,15 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
-from app.api.deps import get_current_user
-from app.core.database import get_db
-from app.schemas.chat import ChatRequest, ChatResponse
-from app.services.chatbot_service import ChatbotService
+import google.generativeai as genai
+import os
+from fastapi import APIRouter
 
 router = APIRouter()
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-
-@router.post("", response_model=ChatResponse)
-def chat(
-    payload: ChatRequest,
-    db: Session = Depends(get_db),
-    _current_user=Depends(get_current_user),
-) -> ChatResponse:
-    result = ChatbotService.process_message(db, payload.message)
-    return ChatResponse(**result)
+@router.post("")
+async def chat(data: dict):
+    user_msg = data.get("message", "")
+    response = model.generate_content(
+        f"You are SmartRail AI assistant. Help with train schedules, PNR status, seat availability, delays, and railway info. Be concise.\n\nUser: {user_msg}"
+    )
+    return {"response": response.text}

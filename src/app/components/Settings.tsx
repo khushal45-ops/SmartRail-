@@ -8,7 +8,7 @@ import { Label } from "./ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Separator } from "./ui/separator";
-import { Shield, Users, Bell, Database, Key, Lock, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Shield, Users, Bell, Database, Lock, CheckCircle } from "lucide-react";
 
 const roles = [
   { id: "superadmin", name: "Super Admin", desc: "Full system access", color: "bg-red-500/20 text-red-400 border-red-500/30", perms: ["All modules", "User management", "System settings", "Data export", "Emergency controls"] },
@@ -30,7 +30,6 @@ export function Settings() {
   const [notifSettings, setNotifSettings] = useState({
     emailAlerts: true, smsAlerts: false, pushNotif: true, delayAlerts: true, maintenanceWindow: false, weeklyReport: true,
   });
-  const [showKey, setShowKey] = useState(false);
   const [currentRole, setCurrentRole] = useState("admin");
 
   const toggle = (key: keyof typeof notifSettings) => setNotifSettings((p) => ({ ...p, [key]: !p[key] }));
@@ -241,50 +240,11 @@ export function Settings() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-slate-900/50 border-white/10">
               <CardHeader className="pb-3">
-                <CardTitle className="text-white text-base flex items-center gap-2"><Key className="w-4 h-4 text-amber-400" /> API Configuration</CardTitle>
+                <CardTitle className="text-white text-base flex items-center gap-2"><Database className="w-4 h-4 text-blue-400" /> System Metrics</CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                <div>
-                  <Label className="text-slate-300 mb-2 block">API Key</Label>
-                  <div className="flex gap-2">
-                    <Input value={showKey ? "sk-rail-prod-a1b2c3d4e5f6g7h8i9j0" : "sk-rail-prod-••••••••••••••••••"} readOnly className="bg-white/5 border-white/10 text-white font-mono" />
-                    <Button variant="outline" className="border-white/10 text-slate-300 hover:bg-white/10" onClick={() => setShowKey(!showKey)}>
-                      {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <Separator className="bg-white/10" />
-                <div className="flex flex-col gap-3 text-sm">
-                  <div className="flex justify-between"><span className="text-slate-400">Environment</span><Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Production</Badge></div>
-                  <div className="flex justify-between"><span className="text-slate-400">API Version</span><span className="text-white">v2.4.1</span></div>
-                  <div className="flex justify-between"><span className="text-slate-400">Rate Limit</span><span className="text-white">10,000 req/hr</span></div>
-                  <div className="flex justify-between"><span className="text-slate-400">Last Rotated</span><span className="text-white">15 May 2026</span></div>
-                </div>
-                <Button variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">Rotate API Key</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-900/50 border-white/10">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white text-base flex items-center gap-2"><Database className="w-4 h-4 text-blue-400" /> System Info</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3 text-sm">
-                {[
-                  { label: "Platform Version", value: "SmartRail v1.0.0" },
-                  { label: "Database", value: "PostgreSQL 15.4" },
-                  { label: "Last Backup", value: "Today 03:00 AM" },
-                  { label: "Data Retention", value: "7 years (regulatory)" },
-                  { label: "Uptime", value: "99.97% (30 days)" },
-                  { label: "Active Sessions", value: "1,247" },
-                  { label: "Cache Hit Rate", value: "94.3%" },
-                  { label: "Avg Response Time", value: "142ms" },
-                ].map((item) => (
-                  <div key={item.label} className="flex justify-between py-2 border-b border-white/5 last:border-0">
-                    <span className="text-slate-400">{item.label}</span>
-                    <span className="text-white">{item.value}</span>
-                  </div>
-                ))}
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white mt-2">Export System Report</Button>
+              <CardContent className="flex flex-col gap-3 text-sm text-slate-400 text-center py-8">
+                <p>System metrics and live analytics have been moved to the primary Analytics module.</p>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white mt-4 mx-auto w-fit">Go to Analytics</Button>
               </CardContent>
             </Card>
           </div>

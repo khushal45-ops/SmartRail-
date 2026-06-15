@@ -1,14 +1,19 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   timeout: 10000,
 });
 
+let memoryToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+  memoryToken = token;
+};
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (memoryToken) {
+    config.headers.Authorization = `Bearer ${memoryToken}`;
   }
   return config;
 });
@@ -17,7 +22,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-       localStorage.removeItem('token');
+       setAuthToken(null);
+       // Dispatch custom event for App to handle logout
+       window.dispatchEvent(new Event('auth:unauthorized'));
     }
     return Promise.reject(error);
   }
@@ -64,8 +71,8 @@ export const requestReallocation = async (pnr: string, options: any) => {
 
 export const sendChatMessage = async (message: string) => {
   try {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return { reply: "I'm your AI assistant. How can I help you further with SmartRail?" };
+    const response = await api.post('/api/chat', { message });
+    return { reply: response.data.response };
   } catch (err) {
     throw err;
   }
