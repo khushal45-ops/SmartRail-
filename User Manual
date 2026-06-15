@@ -1,0 +1,351 @@
+SmartRail — User Manual
+
+AI-Powered Railway Management System
+Version 1.0 | Acropolis Institute of Technology and Research, Indore
+Team: Khushal, Darshan, Divyansh, Aaryan | Guide: Prof. Mayank Bhat
+
+
+1. Introduction
+
+SmartRail is an AI-powered Railway Management System designed to improve passenger experience and railway operational efficiency. The system predicts train delays using Machine Learning, provides smart ticket reallocation, real-time train tracking, and an AI chatbot for passenger assistance.
+
+This manual explains how to install, configure, and use SmartRail for both passengers and administrators.
+
+
+2. System Requirements
+
+Hardware
+
+Processor: Intel Core i5 or higher
+RAM: Minimum 8 GB
+Storage: Minimum 5 GB free space
+
+Software
+
+Operating System: Windows 10/11, macOS, or Ubuntu 20+
+Python 3.11 or higher
+Node.js 18 or higher
+PostgreSQL 14 or higher
+Redis 6 or higher
+Git
+
+3. Installation and Setup
+
+Step 1 — Clone the Repository
+
+Open terminal and run:
+git clone https://github.com/khushal45-ops/SmartRail-.git
+cd SmartRail-
+
+Step 2 — Backend Setup
+
+Create and activate a Python virtual environment:
+
+Windows:
+python -m venv .venv
+.venv\Scripts\activate
+
+macOS/Linux:
+python -m venv .venv
+source .venv/bin/activate
+
+Install Python dependencies:
+pip install -r requirements.txt
+
+Step 3 — Configure Environment Variables
+
+Copy the example environment file:
+cp .env.example .env
+
+Open .env and set the following values:
+APP_NAME=SmartRail API
+DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/railway_db
+REDIS_URL=redis://localhost:6379/0
+SECRET_KEY=your-secret-key-here
+CORS_ORIGINS=["http://localhost:5174"]
+
+Step 4 — Setup Database
+
+Create a PostgreSQL database named railway_db and run migrations.
+
+Step 5 — Train the ML Model
+
+python app/ml/train_model.py
+
+This will read datasets from the Dataset/ folder, train the Random Forest model, and save it to models/delay_model.pkl.
+
+Step 6 — Start Backend Server
+
+python -m uvicorn main:app --reload --port 8000
+
+Backend runs at: http://localhost:8000
+API Documentation: http://localhost:8000/docs
+
+Step 7 — Start Frontend
+
+Open a new terminal window:
+npm install
+npm run dev
+
+Frontend runs at: http://localhost:5174
+
+
+4. User Guide — Passenger
+
+4.1 Registration and Login
+
+Open http://localhost:5174 in your browser.
+
+To register a new account:
+
+
+Click "Create Profile" on the login page
+Enter your Full Name, Email, and Password
+Click "Create Account"
+You will be redirected to the login page
+
+
+To login:
+
+
+Enter your Email and Password
+Click "Login"
+Or click "Passenger Login" for quick demo access
+
+
+Demo Credentials:
+Email: passenger@smartrail.com
+Password: pass123
+
+After login, you will see the Passenger Dashboard with Passenger Mode only.
+
+4.2 Passenger Dashboard
+
+The dashboard displays:
+
+
+Active Trains count
+Passengers Today
+Delayed Trains count
+Alerts Generated
+Live Railway Network Map showing train positions across India
+Zone Performance showing efficiency of each railway zone
+
+
+4.3 Train Monitor
+
+Click "Train Monitor" in the left sidebar.
+
+You will see a list of all trains with their current status (On Time / Delayed / Cancelled).
+
+Use filter buttons to filter by:
+
+
+All Status
+Express trains only
+North Zone trains only
+
+
+Click on any train to see detailed information across 6 tabs:
+
+Tab 1 — Overview:
+Shows train name, ID, zone, type, priority, current status, departure/arrival time, platform number.
+
+Tab 2 — Live Tracking:
+Shows current station, next station, speed, route progress bar, estimated arrival time.
+
+Tab 3 — Route Details:
+Full list of stations with arrival time, departure time, platform number, and distance from source.
+
+Tab 4 — Passenger Load:
+Total seats, booked seats, available seats, occupancy percentage, class-wise breakdown (Sleeper, 3AC, 2AC, 1AC).
+
+Tab 5 — Delay Analysis:
+Current delay in minutes, delay reason, last 7 days delay history chart, on-time percentage.
+Click "Predict Delay" button to run the ML model and get predicted delay for the current station.
+
+Tab 6 — AI Prediction:
+Predicted delay, confidence percentage, factors affecting delay (weather, track, congestion), recommended action.
+
+4.4 Alerts and Notifications
+
+Click "Alerts & Notifications" in the sidebar.
+
+You will see all active alerts including:
+
+
+Heavy delay predictions
+Platform change notifications
+Weather warnings
+Cancellation alerts
+
+
+4.5 Passenger Portal
+
+Click "Passenger Portal" in the sidebar.
+
+Features available:
+
+
+PNR Tracking: Enter your 10-digit PNR number and click "Check Status" to see booking details, seat number, and journey status.
+Live Train Status: Search for any train by number or name.
+Ticket Reallocation: If your train is delayed, request reallocation to an alternative train.
+Journey History: View your past journeys.
+
+
+4.6 AI Assistant (Chatbot)
+
+Click "AI Assistant" in the sidebar.
+
+Type your query or click one of the quick reply buttons at the bottom.
+
+The chatbot can answer:
+
+
+"Which trains are delayed today?" — Shows list of delayed trains
+"Check PNR 2451369874" — Shows PNR status
+"How do I cancel my ticket?" — Shows cancellation steps
+"What is the refund policy?" — Shows refund information
+"Platform info" — Shows platform details
+"Seat availability" — Shows available seats
+
+
+4.7 Logout
+
+Click the logout icon in the top right corner to log out and return to the login page.
+
+
+5. User Guide — Admin
+
+5.1 Admin Login
+
+On the login page click "Admin Login" or use:
+Email: admin@smartrail.com
+Password: admin123
+
+After login you will see Admin Mode only in the sidebar.
+
+5.2 Admin Dashboard
+
+The admin dashboard shows:
+
+
+Network-wide statistics
+All active trains across all zones
+Real-time delay monitoring
+Zone performance overview
+
+
+5.3 Train Management
+
+Admins can:
+
+
+View all trains across all zones
+Update train status (On Time / Delayed / Cancelled)
+View detailed train telemetry
+
+
+5.4 Analytics
+
+The analytics section provides:
+
+
+Delay trends for last 7 days
+Average delay time per route
+Best and worst performing zones
+Platform utilization reports
+Seat occupancy statistics
+
+
+5.5 Zone Monitoring
+
+View zone-wise performance:
+
+
+Northern Zone
+Western Zone
+Southern Zone
+Eastern Zone
+Central Zone
+
+
+Each zone shows efficiency percentage and number of active trains.
+
+5.6 Notification Management
+
+Admins can send alerts to passengers:
+
+
+Heavy delay alerts
+Platform change notifications
+Weather warnings
+Cancellation alerts
+
+
+Notifications are sent via SMS and Email using the Celery background task system.
+
+
+6. ML Delay Prediction — How It Works
+
+When you click "Predict Delay" on any train's Delay Analysis tab:
+
+
+The frontend sends the train number and current station code to the backend API.
+FastAPI receives the request at POST /api/trains/predict-delay.
+The backend loads the trained Random Forest model from models/delay_model.pkl.
+Input features are encoded using saved LabelEncoders from models/encoders.pkl.
+The model predicts delay in minutes based on 9 features including historical delay percentages, route distance, and running days.
+The predicted delay and confidence level (85%) are returned and displayed on screen.
+
+
+Model Performance:
+
+
+Algorithm: Random Forest Regressor
+R2 Score: 93.21% accuracy
+Average prediction error: 14.58 minutes
+
+
+
+7. Troubleshooting
+
+Problem: Backend not starting
+Solution: Make sure PostgreSQL and Redis are running. Check .env file has correct DATABASE_URL and REDIS_URL.
+
+Problem: "Failed to predict delay" error
+Solution: Make sure models/delay_model.pkl exists. If not, run: python app/ml/train_model.py
+
+Problem: Frontend shows blank screen
+Solution: Make sure backend is running on port 8000. Check CORS settings in .env.
+
+Problem: Login not working
+Solution: Clear browser localStorage and try again. Use demo credentials: passenger@smartrail.com / pass123
+
+Problem: npm run dev fails
+Solution: Run npm install first to install all Node.js dependencies.
+
+
+8. API Reference
+
+The backend provides the following REST API endpoints:
+
+POST /api/auth/register — Create new user account
+POST /api/auth/login — Login and receive JWT token
+GET /api/trains/ — List all trains
+POST /api/trains/predict-delay — Predict delay for a train at a station
+PUT /api/trains/{id}/status — Update train status (Admin only)
+GET /api/tickets/ — List tickets
+POST /api/tickets/reallocate — Request ticket reallocation
+POST /api/chat — Send message to AI chatbot
+GET /api/analytics/summary — Get dashboard statistics
+GET /api/analytics/delay-trends — Get delay trends for last 7 days
+WS /ws/train/{id} — WebSocket for live train status
+WS /ws/dashboard — WebSocket for live dashboard stats
+
+Full interactive API documentation available at: http://localhost:8000/docs
+
+
+Prepared by: Team SmartRail
+Acropolis Institute of Technology and Research, Indore
+Minor Project - II | January – June 2026
