@@ -26,6 +26,16 @@ Traditional railway systems only show current train status — they do not predi
 
 ---
 
+## Live Demo
+
+| Service | URL |
+|---------|-----|
+| 🌐 Frontend (Vercel) | [https://smart-rail-72fn.vercel.app](https://smart-rail-72fn.vercel.app) |
+| 🚀 Backend API (Railway) | [https://smartrail-production.up.railway.app](https://smartrail-production.up.railway.app) |
+| 📚 API Docs | [https://smartrail-production.up.railway.app/docs](https://smartrail-production.up.railway.app/docs) |
+
+---
+
 ## Features
 
 | Feature | Description |
