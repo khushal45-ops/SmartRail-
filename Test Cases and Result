@@ -1,0 +1,317 @@
+SmartRail — Test Cases and Results
+
+Minor Project - II | Acropolis Institute of Technology and Research, Indore
+Team: Khushal, Darshan, Divyansh, Aaryan | Guide: Prof. Mayank Bhat
+
+
+Test Case 1 — User Registration and Login
+
+Test Case ID: TC-001
+Module: Authentication
+Tested By: Divyansh
+Date: June 2026
+
+Objective:
+Verify that a new user can register and login successfully with role-based access.
+
+Pre-conditions:
+
+
+Application is running on http://localhost:5174
+Backend is running on http://localhost:8000
+
+
+Test Steps:
+
+
+Open http://localhost:5174 in browser
+Click "Create Profile" on login page
+Enter Full Name: "Test User", Email: "test@smartrail.com", Password: "test123"
+Click "Create Account"
+Login with the registered credentials
+Observe the dashboard and sidebar
+
+
+Expected Result:
+
+
+Account is created successfully
+User is redirected to login page after registration
+After login, only Passenger Mode is visible in sidebar
+Admin Mode toggle is completely hidden
+User name appears in top right corner
+
+
+Actual Result:
+
+
+Account created and stored in localStorage successfully
+Redirected to login page after 1 second
+Passenger Dashboard loaded with Passenger Mode only
+Admin Mode hidden as expected
+"Test User" displayed in top right corner
+
+
+Status: PASS
+
+
+Test Case 2 — ML Delay Prediction API
+
+Test Case ID: TC-002
+Module: Machine Learning — Delay Prediction
+Tested By: Khushal
+Date: June 2026
+
+Objective:
+Verify that the delay prediction model returns a valid prediction for a given train and station.
+
+Pre-conditions:
+
+
+Backend is running on http://localhost:8000
+models/delay_model.pkl exists
+models/encoders.pkl exists
+
+
+Test Steps:
+
+
+Open http://localhost:5174
+Login as Passenger
+Go to Train Monitor
+Click on any train (e.g. Rajdhani Express #12301)
+Click on "Delay Analysis" tab
+Click "Predict Delay" button
+Observe the response
+
+
+Expected Result:
+
+
+API call is made to POST /api/trains/predict-delay
+Predicted delay in minutes is displayed
+Confidence level is shown
+No error message appears
+
+
+Actual Result:
+
+
+API called successfully
+Predicted delay returned (e.g. 2.18 minutes for train 12673 at MAS)
+Confidence level shown as 85%
+Result displayed in styled prediction block on UI
+
+
+Status: PASS
+
+
+Test Case 3 — PNR Status Check
+
+Test Case ID: TC-003
+Module: Passenger Portal — PNR Tracking
+Tested By: Aaryan
+Date: June 2026
+
+Objective:
+Verify that the PNR Check Status button returns booking details for a valid PNR number.
+
+Pre-conditions:
+
+
+Application running on http://localhost:5174
+User is logged in as Passenger
+
+
+Test Steps:
+
+
+Go to Passenger Portal from sidebar
+Find "Track PNR Status" section
+Enter PNR number: 2451369874
+Click "Check Status" button
+Observe the result displayed
+
+
+Expected Result:
+
+
+System accepts 10-digit PNR number
+Returns passenger name, train name, seat, journey details
+Shows status as Confirmed / RAC / Waitlist
+Recent searches are updated with this PNR
+
+
+Actual Result:
+
+
+PNR 2451369874 accepted
+Result displayed: Passenger: Rahul Sharma, Train: Rajdhani Express 12301, Seat: B2-45, Status: Confirmed
+Recent search chips updated correctly
+
+
+Status: PASS
+
+
+Test Case 4 — AI Chatbot Intent Classification
+
+Test Case ID: TC-004
+Module: AI Assistant — Chatbot
+Tested By: Darshan
+Date: June 2026
+
+Objective:
+Verify that the AI chatbot correctly identifies user intent and returns relevant responses.
+
+Pre-conditions:
+
+
+Application running on http://localhost:5174
+User is logged in
+
+
+Test Steps:
+
+
+Go to AI Assistant from sidebar
+Type "Which trains are delayed today?" and send
+Type "What is the refund policy?" and send
+Type "How do I cancel my ticket?" and send
+Click quick reply chip "Check PNR 2451369874"
+Observe all responses
+
+
+Expected Result:
+
+
+Delayed trains query returns list of currently delayed trains
+Refund policy query returns cancellation refund percentages
+Cancel ticket query returns step-by-step cancellation process
+PNR chip sends message and returns PNR details
+
+
+Actual Result:
+
+
+"Which trains are delayed today?" returned list of 4 delayed trains with delay times
+"What is the refund policy?" returned correct refund policy (48hrs=75%, 24-48hrs=50%, etc.)
+"How do I cancel my ticket?" returned 4-step cancellation process
+PNR chip triggered correctly and showed mock PNR result
+
+
+Status: PASS
+
+
+Test Case 5 — Role-Based Access Control
+
+Test Case ID: TC-005
+Module: Authentication — Role Based Access
+Tested By: Divyansh
+Date: June 2026
+
+Objective:
+Verify that Passenger and Admin users see different portals and cannot access each other's routes.
+
+Pre-conditions:
+
+
+Application running on http://localhost:5174
+
+
+Test Steps:
+
+
+Login with Passenger credentials (passenger@smartrail.com / pass123)
+Check sidebar options visible
+Try to manually navigate to /admin route
+Logout
+Login with Admin credentials (admin@smartrail.com / admin123)
+Check sidebar options visible
+Try to manually navigate to /dashboard route
+
+
+Expected Result:
+
+
+Passenger sees: Dashboard, Train Monitor, Alerts, Passenger Portal, AI Assistant
+Passenger cannot access Admin routes
+Admin sees: Dashboard, Train Monitor, Admin Portal, Analytics, Zone Monitoring
+Admin cannot access Passenger-only routes
+Role is stored in localStorage and persists on page refresh
+
+
+Actual Result:
+
+
+Passenger login showed correct 5 sidebar items, Admin Mode completely hidden
+Navigating to /admin redirected back to passenger dashboard
+Admin login showed correct admin sidebar, Passenger Mode completely hidden
+Role persisted correctly after page refresh
+
+
+Status: PASS
+
+
+Test Case 6 — Real-Time WebSocket Train Status
+
+Test Case ID: TC-006
+Module: Live Tracking — WebSocket
+Tested By: Khushal
+Date: June 2026
+
+Objective:
+Verify that the live train status updates automatically via WebSocket connection.
+
+Pre-conditions:
+
+
+Backend running on http://localhost:8000
+Frontend running on http://localhost:5174
+User logged in as Passenger
+
+
+Test Steps:
+
+
+Go to Train Monitor
+Click on any train
+Click on "Live Tracking" tab
+Observe train position and status
+Wait 10 seconds
+Observe if data refreshes automatically
+Check browser developer tools Network tab for WebSocket connection
+
+
+Expected Result:
+
+
+Live Tracking tab shows current station, next station, speed, route progress
+Data refreshes every 10 seconds automatically without page reload
+WebSocket connection visible in browser Network tab
+No manual refresh required
+
+
+Actual Result:
+
+
+Live Tracking tab displayed current station (Kanpur Central), next station, 68% route progress
+Data updated every 10 seconds via WebSocket
+ws://localhost:8000/ws/train/12301 connection confirmed in Network tab
+Real-time updates working without page reload
+
+
+Status: PASS
+
+Summary
+
+Test Case IDModuleStatusTC-001User Registration and LoginPASSTC-002ML Delay Prediction APIPASSTC-003PNR Status CheckPASSTC-004AI Chatbot Intent ClassificationPASSTC-005Role-Based Access ControlPASSTC-006Real-Time WebSocket Train StatusPASS
+
+Total Test Cases: 6
+Passed: 6
+Failed: 0
+Pass Percentage: 100%
+
+
+Prepared by: Team SmartRail
+Acropolis Institute of Technology and Research, Indore
+Minor Project - II | January – June 2026
