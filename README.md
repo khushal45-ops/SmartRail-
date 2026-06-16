@@ -126,7 +126,7 @@ python app/ml/train_model.py
 python -m uvicorn main:app --reload --port 8000
 ```
 
-Backend runs at:https://smartrail-uwmt.onrender.com)
+Backend runs at:https://smartrail-uwmt.onrender.com
 Swagger Docs: https://smartrail-uwmt.onrender.com
 
 ### Frontend
