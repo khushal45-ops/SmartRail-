@@ -126,8 +126,8 @@ python app/ml/train_model.py
 python -m uvicorn main:app --reload --port 8000
 ```
 
-Backend runs at: http://localhost:8000
-Swagger Docs: http://localhost:8000/docs
+Backend runs at:https://smartrail-uwmt.onrender.com)
+Swagger Docs: https://smartrail-uwmt.onrender.com
 
 ### Frontend
 
@@ -136,7 +136,8 @@ npm install
 npm run dev
 ```
 
-Frontend runs at: http://localhost:5174
+Frontend runs at:https://smartrail-57z0.onrender.com
+
 
 ---
 
