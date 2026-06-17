@@ -22,7 +22,7 @@ Guide: Prof. Mayank Bhat
 
 SmartRail is an AI-powered Railway Management System that predicts train delays, reallocates tickets intelligently, provides real-time train tracking, and assists passengers through an AI chatbot.
 
-Traditional railway systems only show current train status — they do not predict future delays or suggest alternatives. SmartRail solves this with Machine Learning.
+Traditional railway systems only show current train status — they do not predict future delays or suggest alternatives. SmartRail solves this with ML.
 
 ---
 
